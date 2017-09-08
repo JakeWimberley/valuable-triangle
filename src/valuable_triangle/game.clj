@@ -10,18 +10,27 @@
 )
 
 (defn get-random-for-level
-  "Select a random subject at given level."
-  [lev]
-  (first (rand-nth (filter #(contains? (last %) lev) subjects-with-equiv)))
+  "Select a random subject at given level.
+   With one integer argument, pick a random subject equivalent to that level and return it as a string.
+   With three arguments [level chosen-subjects unchosen-subjects-with-equiv], return a vector of the
+   next level, the new chosen-subjects vector and the rest of unchosen-subjects-with-equiv.
+   The three-arg version is meant for recursive selection of unique subjects despite
+   each subject possibly matching multiple levels."
+  ([lev]
+   (first (rand-nth (filter #(contains? (last %) lev) subjects-with-equiv))))
+  ([lev chosen-subjects unchosen-subjects-with-equiv]
+   (let [chosen-subject (first (rand-nth (filter #(contains? (last %) lev) unchosen-subjects-with-equiv)))]
+     [(inc lev) (conj chosen-subjects chosen-subject) (remove #(= (first %) chosen-subject) unchosen-subjects-with-equiv)]
+     ))
 )
 
 (defn new-triangle
   "Generate a full set of subjects for a new game of Valuable Triangle."
   [& args]
-  (for [x (range 1 7)] (get-random-for-level x))
-;  (loop [level-count 1 category-set ()]
-;    (when (<= level-count 6)
-;      (recur (inc level-count) (conj category-set (get-random-for-level level-count)))))
+  (loop [randomizer-args [1 [] subjects-with-equiv]]
+    (if (> (nth randomizer-args 0) 6)
+        (nth randomizer-args 1)
+        (recur (get-random-for-level (nth randomizer-args 0) (nth randomizer-args 1) (nth randomizer-args 2)))))
 )
 
 (defn buzz
