@@ -140,36 +140,48 @@
     (apply q/vertex p))
   (q/end-shape)
   (q/text-align :center :center)
-  ; Always draw the frames around the rotating "prisms."
+  ; Always draw the frames around the rotating "prisms," but the color changes when a subject has been guessed.
+  ; We'll also draw the logo "side" of each prism. The other "sides" will be drawn over this if necessary.
   (doseq [subject-index (range 0 6)]
-    (let [frame-pos (nth frame-rect-positions subject-index)]
+    (let [frame-pos (nth frame-rect-positions subject-index)
+          prism-pos (nth subject-rect-positions subject-index)]
       (if (nil? (some #{subject-index} (:subjects-correct state)))
-        (q/fill 0xd6 0x32 0x06) ; glowing red border for non-correct subjects
-        (q/fill 0xb5 0x19 0x13) ; red border "off" for correct subjects
+        (do
+          (q/fill 0xd6 0x32 0x06) ; glowing red border for non-correct subjects
+          (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
+          (q/fill 0xb5 0x19 0x13) ; red prism face
+          (q/rect (first prism-pos) (second prism-pos) 186.298 133.634)
+          (q/fill 0xff 0xa5 0x2c) ; yellowy color for logo
+          (apply q/quad (flatten (map (partial vector-add (nth logo-origins subject-index)) logo-quad-points)))
         )
-      (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
+        (do
+          (q/fill 0xb5 0x19 0x13) ; illuminated red border "turned off" for correctly guessed subjects
+          (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
+        )
+        )
       )
     )
   (doseq [subject-index (:subjects-remaining state)]
-    ; If subject is first in remaining list, has been passed, OR has been answered correctly, show white face of "prism". Else show red face with "pyramid" design.
     (let [rect-pos (nth subject-rect-positions subject-index)]
-      (if (and
-            (>= (:game-phase state) (:timer-running game-phases))
-            (or (= subject-index (peek (:subjects-remaining state)))
-                (not (nil? (some #{subject-index} (:subjects-correct state))))
-                (not (nil? (some #{subject-index} (:subjects-passed state)))))
+      (if (>= (:game-phase state) (:timer-running game-phases))
+        (do
+                                        ; If subject is first in remaining list or has been passed, show white face of "prism" on which we can display the subject.
+          (if (or (= subject-index (peek (:subjects-remaining state)))
+                  (not (nil? (some #{subject-index} (:subjects-passed state)))))
+            (do
+              (q/fill 255 255 255)
+              (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
+              )
+            )
+                                        ; Else if subject is in correct list then redraw a blank red face on which we can display the award value.
+          (if (not (nil? (some #{subject-index} (:subjects-correct state))))
+            (do
+              (q/fill 0xb5 0x19 0x13)
+              (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
+              )
+            )
           )
-        (do
-          (q/fill 255 255 255) ; white face
-          (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
         )
-        (do
-          (q/fill 0xb5 0x19 0x13) ; red face
-          (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
-          (q/fill 0xff 0xa5 0x2c) ; yellowey logo color
-          (apply q/quad (flatten (map (partial vector-add (nth logo-origins subject-index)) logo-quad-points)))
-        )
-      )
     )
   )
   ; Once we have started the game it is necessary to show the subject text or award value for revealed subjects.
