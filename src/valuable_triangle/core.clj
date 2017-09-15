@@ -39,15 +39,21 @@
 
 (def subject-text (game/new-triangle))
 
-; origin points of subject "prisms" (nil in first slot lets us use 1-based numbering for subjects)
+; origin points of subject "prisms" and the illuminated "frames"
 (def subject-rect-positions
   [[52.341 437.204] [306.851 437.204] [561.361 437.204] [179.596 256.154] [434.106 256.154] [306.851 74.397]])
+(def frame-rect-positions
+  [[41.372 425.932] [295.882 425.932] [550.392 425.932] [168.627 244.883] [423.137 244.883] [295.882 63.125]])
 
-; vertices of the "pyramid" polygon on each prism
-(def subject-quad-positions
-  [
-   ;TODO
-  ])
+; vertices of the "pyramid" logo quad relative to an origin point
+(def logo-quad-points
+  [[0 0] [159.966 0] [90.845 -116.519] [71.097 -116.519]])
+; and here are the origins for each prism
+(def logo-origins
+  [[65.511 562.28] [320.021 562.28] [574.531 562.28] [192.766 381.231] [447.276 381.231] [320.031 199.473]])
+; Maybe this is a lib fn in Clojure...I don't know...
+(defn vector-add [[x1 y1] [x2 y2]]
+  [(+ x1 x2) (+ y1 y2)])
 
 (defn update-runner [last-keypress state]
   (let [sgp (:game-phase state)
@@ -125,19 +131,25 @@
   ; Always draw the background of the "big board."
   (q/fill 0xc6 0x32 0x06) ; red border
   (q/begin-shape)
-    (doseq [p [[255 0] [0 417.5] [0 600] [800 600] [800 417.5] [545 0]]]
-      (let [iyo-p [(first p) (second p)]] (apply q/vertex iyo-p)))
+  (doseq [p [[255 0] [0 417.5] [0 600] [800 600] [800 417.5] [545 0]]]
+    (apply q/vertex p))
   (q/end-shape)
   (q/fill 0xb2 0xba 0xdd) ; blue field
   (q/begin-shape)
-    (doseq [p '([280 0] [0 458.75] [0 600] [800 600] [800 458.75] [520 0])]
-      (let [iyo-p [(first p) (second p)]] (apply q/vertex iyo-p)))
+  (doseq [p '([280 0] [0 458.75] [0 600] [800 600] [800 458.75] [520 0])]
+    (apply q/vertex p))
   (q/end-shape)
-  ; Subject frames
   (q/text-align :center :center)
-  (q/fill 0xc6 0x32 0x06) ; red border
-  (doseq [rect-pos [[41.372 425.932] [295.882 425.932] [550.392 425.932] [168.627 244.883] [423.137 244.883] [295.882 63.125]]]
-    (q/rect (first rect-pos) (second rect-pos) 208.236 156.177))
+  ; Always draw the frames around the rotating "prisms."
+  (doseq [subject-index (range 0 6)]
+    (let [frame-pos (nth frame-rect-positions subject-index)]
+      (if (nil? (some #{subject-index} (:subjects-correct state)))
+        (q/fill 0xd6 0x32 0x06) ; glowing red border for non-correct subjects
+        (q/fill 0xb5 0x19 0x13) ; red border "off" for correct subjects
+        )
+      (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
+      )
+    )
   (doseq [subject-index (:subjects-remaining state)]
     ; If subject is first in remaining list, has been passed, OR has been answered correctly, show white face of "prism". Else show red face with "pyramid" design.
     (let [rect-pos (nth subject-rect-positions subject-index)]
@@ -148,12 +160,14 @@
                 (not (nil? (some #{subject-index} (:subjects-passed state)))))
           )
         (do
-          (q/fill 255 255 255) ; white
+          (q/fill 255 255 255) ; white face
           (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
         )
         (do
-          (q/fill 0xa5 0x19 0x13) ; "glowing" red
+          (q/fill 0xb5 0x19 0x13) ; red face
           (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
+          (q/fill 0xff 0xa5 0x2c) ; yellowey logo color
+          (apply q/quad (flatten (map (partial vector-add (nth logo-origins subject-index)) logo-quad-points)))
         )
       )
     )

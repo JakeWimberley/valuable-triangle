@@ -42,7 +42,7 @@
                ["Clothing with pockets" 5]
                ["Vicious things" 6]
                ["Places with a counter" 6]
-               ["Things you crumple" 6]
+               ["Things that crackle" 6]
                ["Things with a spring" 6]
                ["Bleak things" 6]
                ["Things you avoid" 6]
