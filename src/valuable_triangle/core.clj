@@ -109,8 +109,10 @@
                 :subjects-remaining (second pass-sp-sr)
                 :key-pressed last-keypress
               })
-            ; reset (mostly for debug purposes)
-            :R (assoc state :timer config/game-length-sec :key-pressed last-keypress)
+            ; reset - run setup again to reset subjects, but keep timer running
+            :R (assoc (setup) :timer next-tick :game-phase (:timer-running game-phases))
+            ; reset timer only
+            :Z (assoc state :timer config/game-length-sec :key-pressed last-keypress)
             ; default: no key was pressed so only state change is new timer value; also clear key-pressed
             (assoc state :timer next-tick :key-pressed nil)
           )
@@ -165,11 +167,30 @@
         )
       )
     )
+  ; On the title screen draw the name of the game.
+  (if (= (:game-phase state) (:title-screen game-phases))
+    (do
+      (q/fill 255 255 255)
+      (q/text-font font-award-value)
+      (q/text-leading config/line-spacing-award-value)
+      (q/stroke 0 0 0)
+      (q/stroke-weight 3)
+      (q/text "It's time to play...\nTHE\nVALUABLE\nTRIANGLE\nPress 'a' to continue" 0 0 800 600)
+      (q/no-stroke)))
+  (if (= (:game-phase state) (:pause-before-game game-phases))
+    (do
+      (q/stroke 0 0 0)
+      (q/stroke-weight 3)
+      (q/fill 255 255 255)
+      (q/text-font font-award-value)
+      (q/text-leading config/line-spacing-award-value)
+      (q/text "Press 's' to begin!" 0 0 800 600)
+      (q/no-stroke)))
   (doseq [subject-index (:subjects-remaining state)]
     (let [rect-pos (nth subject-rect-positions subject-index)]
       (if (>= (:game-phase state) (:timer-running game-phases))
         (do
-                                        ; If subject is first in remaining list or has been passed, show white face of "prism" on which we can display the subject.
+                                      ; If subject is first in remaining list or has been passed, show white face of "prism" on which we can display the subject.
           (if (or (= subject-index (peek (:subjects-remaining state)))
                   (not (nil? (some #{subject-index} (:subjects-passed state)))))
             (do
@@ -177,7 +198,7 @@
               (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
               )
             )
-                                        ; Else if subject is in correct list then redraw a blank red face on which we can display the award value.
+                                      ; Else if subject is in correct list then redraw a blank red face on which we can display the award value.
           (if (not (nil? (some #{subject-index} (:subjects-correct state))))
             (do
               (q/fill 0xb5 0x19 0x13)
@@ -186,8 +207,8 @@
             )
           )
         )
+      )
     )
-  )
   ; Once we have started the game it is necessary to show the subject text or award value for revealed subjects.
   (if (>= (:game-phase state) (:timer-running game-phases))
     (let [subject-index-to-show (peek (:subjects-remaining state))
@@ -195,6 +216,7 @@
        ; draw current subject (the first remaining one)
        (q/fill 0 0 0) ; black text
        (q/text-font font-subject-text)
+       (q/text-leading config/line-spacing-subject-text)
        (if (not (nil? subject-index-to-show))
          (q/text (cljstr/upper-case (nth subject-text subject-index-to-show)) (first rect-pos-current) (second rect-pos-current) 186.298 133.634))
                                         ; draw text of passed subjects also

@@ -29,7 +29,9 @@
 
 ; font sizes are configurable for portability's sake
 ; e.g. award values in Japanese yen probably would be in the many thousands
-(def font-size-subject-text 24)
+(def font-size-subject-text 30)
+(def line-spacing-subject-text (+ font-size-subject-text 6))
 (def font-size-award-value 60)
+(def line-spacing-award-value (+ font-size-award-value 15))
 
 (load "subjects")
