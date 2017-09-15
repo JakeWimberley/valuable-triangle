@@ -1,12 +1,16 @@
 (ns valuable-triangle.core
   (:require [quil.core :as q]
             [quil.middleware :as m]
+            [clojure.string :as cljstr]
             [valuable-triangle.config :as config]
             [valuable-triangle.game :as game]))
 
 
 (defn setup []
   (q/frame-rate config/spec-frame-rate)
+                                        ; Load our fonts
+  (def font-subject-text (q/create-font "Oswald-Regular.ttf" config/font-size-subject-text true))
+  (def font-award-value (q/create-font "Shrikhand-Regular.ttf" config/font-size-award-value true))
   ; Load the SVG shapes for the timer display
   (let [segment-names '("a" "b" "c" "d" "e" "f" "g")]
     (def timer-shapes-tens (zipmap (map keyword segment-names) (map #(q/load-shape (str "elements/tens-" % ".svg")) segment-names)))
@@ -186,19 +190,22 @@
   )
   ; Once we have started the game it is necessary to show the subject text or award value for revealed subjects.
   (if (>= (:game-phase state) (:timer-running game-phases))
-       (let [subject-to-show (peek (:subjects-remaining state))
-            rect-pos-current (if (not (nil? subject-to-show)) (nth subject-rect-positions subject-to-show) nil)]
+    (let [subject-index-to-show (peek (:subjects-remaining state))
+          rect-pos-current (if (not (nil? subject-index-to-show)) (nth subject-rect-positions subject-index-to-show) nil)]
        ; draw current subject (the first remaining one)
        (q/fill 0 0 0) ; black text
-       (if (not (nil? subject-to-show))
-         (q/text (nth subject-text subject-to-show) (first rect-pos-current) (second rect-pos-current) 186.298 133.634))
+       (q/text-font font-subject-text)
+       (if (not (nil? subject-index-to-show))
+         (q/text (cljstr/upper-case (nth subject-text subject-index-to-show)) (first rect-pos-current) (second rect-pos-current) 186.298 133.634))
                                         ; draw text of passed subjects also
        (doseq [passed-index (:subjects-passed state)]
-         (let [rect-pos-passed (nth subject-rect-positions passed-index)]
-           (q/text (nth subject-text passed-index) (first rect-pos-passed) (second rect-pos-passed) 186.298 133.634))
+         (let [rect-pos-passed (nth subject-rect-positions passed-index)
+               passed-subject-text (cljstr/upper-case (nth subject-text passed-index))]
+           (q/text passed-subject-text (first rect-pos-passed) (second rect-pos-passed) 186.298 133.634))
          )
                                         ; draw values of the subjects the player has gotten correct
        (q/fill 0xff 0xa5 0x2c) ; yellowey text
+       (q/text-font font-award-value)
        (doseq [value-to-draw (:subjects-correct state)]
          (let [rect-pos-value (nth subject-rect-positions value-to-draw)]
            (q/text (str config/value-symbol (nth config/subject-values value-to-draw)) (first rect-pos-value) (second rect-pos-value) 186.298 133.634))
@@ -221,16 +228,19 @@
       )
     )
   )
-  ; debug
-  (q/fill 255 255 255)
-  (q/text-align :left)
-  (q/text-num (:game-phase state) 20 20)
-  (q/text-num (q/frame-count) 20 40)
-  (q/text-num (:timer state) 20 60)
-  (q/text (str "rem: " (:subjects-remaining state)) 20 80)
-  (q/text (str "cor: " (:subjects-correct state)) 20 100)
-  (q/text (str "pas: " (:subjects-passed state)) 20 120)
-  (q/text (str "k-p: " (:key-pressed state)) 20 140)
+  (if config/show-debug-data
+    (do
+      (q/text-font font-subject-text)
+      (q/fill 255 255 255)
+      (q/text-align :left)
+      (q/text-num (:game-phase state) 20 20)
+      (q/text-num (q/frame-count) 20 40)
+      (q/text-num (:timer state) 20 60)
+      (q/text (str "rem: " (:subjects-remaining state)) 20 80)
+      (q/text (str "cor: " (:subjects-correct state)) 20 100)
+      (q/text (str "pas: " (:subjects-passed state)) 20 120)
+      (q/text (str "k-p: " (:key-pressed state)) 20 140)
+      ))
 )
 
 

@@ -23,6 +23,11 @@ lein run
 
 ## License
 
+The TrueType fonts *Oswald* and *Shrikhand* are distributed under the Open Font License. The fonts and their applicable licenses are included in the directory
+`data`.
+
+The following applies to the remaining files:
+
 Copyright © 2017 Jake Wimberley
 
 Distributed under the Eclipse Public License either version 1.0 or (at

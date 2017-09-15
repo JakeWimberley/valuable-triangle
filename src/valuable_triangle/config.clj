@@ -1,6 +1,8 @@
 (ns valuable-triangle.config
   (:gen-class))
 
+(def show-debug-data false)
+
 ; gameplay
 
 (def game-length-sec 60)
@@ -24,5 +26,10 @@
 ; look-n-feel
 
 (def spec-frame-rate 30)
+
+; font sizes are configurable for portability's sake
+; e.g. award values in Japanese yen probably would be in the many thousands
+(def font-size-subject-text 24)
+(def font-size-award-value 60)
 
 (load "subjects")
