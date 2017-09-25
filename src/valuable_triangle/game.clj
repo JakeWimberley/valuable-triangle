@@ -2,11 +2,12 @@
   (:require [valuable-triangle.config :as config])
   (:gen-class))
 
-(def subjects-with-equiv
-  "the list of subjects with equivalences applied"
+(defn subjects-with-equiv
+  "apply equivalences to the list named in the arg"
+  [list-name]
   (map
    #(vector (first %) (conj (get config/level-equivs (last %)) (last %)))
-   config/subjects)
+   (config/subjects list-name))
 )
 
 (defn filter-subjects-with-equiv
@@ -22,13 +23,13 @@
 
 (defn get-random-for-level
   "Select a random subject at given level.
-   With one integer argument, pick a random subject equivalent to that level and return it as a string.
+   With two args [subj-lev list-name], pick a random subject from the subject list list-name equivalent to level subj-lev and return it as a string.
    With three arguments [level chosen-subjects unchosen-subjects-with-equiv], return a vector of the
    next level, the new chosen-subjects vector and the rest of unchosen-subjects-with-equiv.
    The three-arg version is meant for recursive selection of unique subjects despite
    each subject possibly matching multiple levels."
-  ([lev]
-   (first (rand-nth (filter (filter-subjects-with-equiv lev) subjects-with-equiv))))
+  ([lev subject-list-name]
+   (first (rand-nth (filter (filter-subjects-with-equiv lev) (subjects-with-equiv subject-list-name)))))
   ([lev chosen-subjects unchosen-subjects-with-equiv]
    (if (nil? (some #(re-find #"What" %) chosen-subjects)) ; if a "What a ... would say" subject has not already been chosen
      (let [chosen-subject (first (rand-nth (filter (filter-subjects-with-equiv lev) unchosen-subjects-with-equiv)))] ; any subject possible
@@ -42,9 +43,9 @@
 )
 
 (defn new-triangle
-  "Generate a full set of subjects for a new game of Valuable Triangle."
-  [& args]
-  (loop [randomizer-args [1 [] subjects-with-equiv]]
+  "Generate a full set of subjects for a new game of Valuable Triangle using the subject list named as the argument."
+  [subject-list-name]
+  (loop [randomizer-args [1 [] (subjects-with-equiv subject-list-name)]]
     (if (> (nth randomizer-args 0) 6)
         (nth randomizer-args 1)
         (recur (get-random-for-level (nth randomizer-args 0) (nth randomizer-args 1) (nth randomizer-args 2)))))

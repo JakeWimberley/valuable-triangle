@@ -41,7 +41,8 @@
    :timer-running 2
    :end-screen 3})
 
-(def subject-text (game/new-triangle))
+(config/load-subjects-from-dir "elements")
+(def subject-text (game/new-triangle "Set J"))
 
 ; origin points of subject "prisms" and the illuminated "frames"
 (def subject-rect-positions
