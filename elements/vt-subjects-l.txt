@@ -1,4 +1,4 @@
-<Set L>
+<Scalene>
 Things on a farm, 1
 Parts of a bicycle, 1
 Garden decorations, 2

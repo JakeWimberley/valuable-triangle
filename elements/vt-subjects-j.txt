@@ -1,4 +1,4 @@
-<Set J>
+<Isosceles>
 Parts of a tuxedo,1
 Comic strips,1
 Board games,1

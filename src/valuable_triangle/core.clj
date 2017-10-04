@@ -6,6 +6,15 @@
             [valuable-triangle.game :as game]))
 
 
+(defn shadow-text
+  "Draw text twice within the rectangle x-min y-min x-max y-max, first in bg color, then in fg color, with specified offset."
+  [text-str offset fg bg x-min y-min x-max y-max]
+  (apply q/fill bg)
+  (q/text text-str (+ x-min offset) (+ y-min offset) (- x-max offset) (- y-max offset))
+  (apply q/fill fg)
+  (q/text text-str x-min y-min x-max y-max)
+  )
+
 (defn setup []
   (q/frame-rate config/spec-frame-rate)
                                         ; Load our fonts
@@ -33,7 +42,8 @@
    :timer (+ config/game-length-sec 1) ; add 1 for the initial second
    :subjects-correct []
    :subjects-remaining [5 4 3 2 1 0] ; reverse order since push/pop used
-   :key-pressed nil})
+   :key-pressed nil
+   :subject-list-key-index 0})
 
 (def game-phases
   {:title-screen 0
@@ -42,7 +52,6 @@
    :end-screen 3})
 
 (config/load-subjects-from-dir "elements")
-(def subject-text (game/new-triangle "Set J"))
 
 ; origin points of subject "prisms" and the illuminated "frames"
 (def subject-rect-positions
@@ -65,13 +74,29 @@
         sc (:subjects-correct state)
         sp (:subjects-passed state)
         sr (:subjects-remaining state)
+        slki (:subject-list-key-index state)
+        slki-max (dec (count (keys config/subjects)))
         next-tick (- (:timer state) (if (zero? (mod (q/frame-count) config/spec-frame-rate)) 1 0))]
     (case sgp
-      ; first and second game phases: press key to advance to next phase, otherwise do not change state
+      ; title screen: press key to advance to next phase, otherwise do not change state
       0 (if (= :a last-keypress) (assoc state :game-phase (inc sgp) :key-pressed last-keypress)
                                  (assoc state :key-pressed nil))
-      1 (if (= :s last-keypress) (assoc state :game-phase (inc sgp) :key-pressed last-keypress)
-                                 (assoc state :key-pressed nil))
+      ; pause before game: select subject list
+      1 (case last-keypress
+          :l (if (>= slki slki-max)
+               (assoc state :subject-list-key-index 0)
+               (assoc state :subject-list-key-index (inc slki)))
+          :h (if (<= slki 0)
+               (assoc state :subject-list-key-index slki-max)
+               (assoc state :subject-list-key-index (dec slki)))
+          ; start game
+          :s (do
+               (def subject-text (game/new-triangle (nth (sort (keys config/subjects)) slki)))
+               (assoc state :game-phase (inc sgp) :key-pressed last-keypress)
+               )
+          ; default: no change in state
+          (assoc state :key-pressed nil)
+          )
       2
         ; if time ran out, or no subjects are remaining, jump to end phase
         (if (or (<= (:timer state) 0) (= 0 (count (:subjects-remaining state))))
@@ -80,6 +105,7 @@
            :subjects-correct sc
            :subjects-passed sp
            :subjects-remaining sr
+           :subject-list-key-index slki
            :key-pressed last-keypress}
           ; else we need to decrement timer one frame at a time and check for user responses
           (case last-keypress
@@ -90,6 +116,7 @@
                 :subjects-correct (first ding-sc-sr)
                 :subjects-passed (last ding-sc-sr)
                 :subjects-remaining (second ding-sc-sr)
+                :subject-list-key-index slki
                 :key-pressed :g ; g is "dead key"
               })
             :b (let [buzz-sr (game/buzz sr)]
@@ -99,6 +126,7 @@
                 :subjects-correct sc
                 :subjects-passed sp
                 :subjects-remaining buzz-sr
+                :subject-list-key-index slki
                 :key-pressed last-keypress
               })
             :p (let [pass-sp-sr (game/pass sp sr)]
@@ -108,6 +136,7 @@
                 :subjects-correct sc
                 :subjects-passed (first pass-sp-sr)
                 :subjects-remaining (second pass-sp-sr)
+                :subject-list-key-index slki
                 :key-pressed last-keypress
               })
             ; reset - run setup again to reset subjects, but keep timer running
@@ -171,21 +200,21 @@
   ; On the title screen draw the name of the game.
   (if (= (:game-phase state) (:title-screen game-phases))
     (do
-      (q/fill 255 255 255)
       (q/text-font font-award-value)
       (q/text-leading config/line-spacing-award-value)
-      (q/stroke 0 0 0)
-      (q/stroke-weight 3)
-      (q/text "It's time to play...\nTHE\nVALUABLE\nTRIANGLE\nPress 'a' to continue" 0 0 800 600)
+      (shadow-text "It's time to play...\nTHE\nVALUABLE\nTRIANGLE\nPress [A] to continue" 6 [255 255 255] [0 0 0] 0 0 800 600)
       (q/no-stroke)))
+  ; Allow selection of list name on pause screen.
   (if (= (:game-phase state) (:pause-before-game game-phases))
     (do
       (q/stroke 0 0 0)
       (q/stroke-weight 3)
-      (q/fill 255 255 255)
       (q/text-font font-award-value)
       (q/text-leading config/line-spacing-award-value)
-      (q/text "Press 's' to begin!" 0 0 800 600)
+      (shadow-text (str "Subject list:\n" (nth (sort (keys config/subjects)) (:subject-list-key-index state))) 6 [255 255 255] [0 0 0] 0 0 800 400)
+      (q/text-font font-subject-text)
+      (q/text-leading config/line-spacing-subject-text)
+      (shadow-text "[H] Previous list    [L] Next list    [S] Begin game!" 4 [255 255 255] [0 0 0] 0 400 800 200)
       (q/no-stroke)))
   (doseq [subject-index (:subjects-remaining state)]
     (let [rect-pos (nth subject-rect-positions subject-index)]
