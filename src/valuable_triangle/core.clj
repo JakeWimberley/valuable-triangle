@@ -20,6 +20,7 @@
                                         ; Load our fonts
   (def font-subject-text (q/create-font "Oswald-Regular.ttf" config/font-size-subject-text true))
   (def font-award-value (q/create-font "Shrikhand-Regular.ttf" config/font-size-award-value true))
+  (def font-grand-prize-value (q/create-font "Shrikhand-Regular.ttf" (* 2 config/font-size-award-value) true))
   ; Load the SVG shapes for the timer display
   (let [segment-names '("a" "b" "c" "d" "e" "f" "g")]
     (def timer-shapes-tens (zipmap (map keyword segment-names) (map #(q/load-shape (str "elements/tens-" % ".svg")) segment-names)))
@@ -293,6 +294,22 @@
       )
     )
   )
+  ; Print final winnings and some host blather during the pause after game ends
+  (if (= (:game-phase state) (:pause-after-game game-phases))
+    (do
+      (if (= 6 (count (:subjects-correct state)))
+        (do ; Jackpot!
+          (q/text-font font-award-value)
+          (q/text-leading config/line-spacing-award-value)
+          (shadow-text "Grand prize winner!" 6 [255 255 255] [0 0 0] 0 100 800 300)
+          (q/text-font font-grand-prize-value)
+          (shadow-text (str config/value-symbol config/grand-prize-value) 6 [255 255 255] [0 0 0] 0 300 800 200)
+          )
+        )
+      (q/text-font font-subject-text)
+      (q/text-leading config/line-spacing-subject-text)
+      (shadow-text "[E] Continue" 4 [255 255 255] [0 0 0] 0 500 800 100))
+    )
   ; end screen
   (if (= (:game-phase state) (:end-screen game-phases))
     (do
@@ -302,7 +319,7 @@
       (q/text-font font-subject-text)
       (q/text-leading config/line-spacing-subject-text)
       (shadow-text "\u00a9 2017\nFree software, released under the Eclipse Public License" 4 [255 255 255] [0 0 0] 0 350 800 100)
-      (shadow-text "Press [R] to play again!" 4 [255 255 255] [0 0 0] 0 470 800 100)
+      (shadow-text "[R] Play again!" 4 [255 255 255] [0 0 0] 0 470 800 100)
     )
   )
   (if config/show-debug-data
