@@ -49,7 +49,8 @@
   {:title-screen 0
    :pause-before-game 1
    :timer-running 2
-   :end-screen 3})
+   :pause-after-game 3
+   :end-screen 4})
 
 (config/load-subjects-from-dir "elements")
 
@@ -100,7 +101,7 @@
       2
         ; if time ran out, or no subjects are remaining, jump to end phase
         (if (or (<= (:timer state) 0) (= 0 (count (:subjects-remaining state))))
-          {:game-phase (:end-screen game-phases)
+          {:game-phase (:pause-after-game game-phases)
            :timer 0
            :subjects-correct sc
            :subjects-passed sp
@@ -147,7 +148,16 @@
             (assoc state :timer next-tick :key-pressed nil)
           )
         )
-      3 state ;TODO
+        3 (if (= :e last-keypress)
+            {:game-phase 4
+             :timer (+ config/game-length-sec 1)
+             :subjects-correct []
+             :subjects-remaining [5 4 3 2 1 0] ; reverse order since push/pop used
+             :key-pressed last-keypress
+             :subject-list-key-index (:subject-list-key-index state)}
+            (assoc state :key-pressed nil))
+      4 (if (= :r last-keypress) (assoc state :game-phase (:pause-before-game game-phases) :key-pressed last-keypress)
+            (assoc state :key-pressed nil))
     )
   )
 )
@@ -218,7 +228,8 @@
       (q/no-stroke)))
   (doseq [subject-index (:subjects-remaining state)]
     (let [rect-pos (nth subject-rect-positions subject-index)]
-      (if (>= (:game-phase state) (:timer-running game-phases))
+      (if (and (>= (:game-phase state) (:timer-running game-phases))
+               (< (:game-phase state) (:end-screen game-phases)))
         (do
                                       ; If subject is first in remaining list or has been passed, show white face of "prism" on which we can display the subject.
           (if (or (= subject-index (peek (:subjects-remaining state)))
@@ -240,7 +251,8 @@
       )
     )
   ; Once we have started the game it is necessary to show the subject text or award value for revealed subjects.
-  (if (>= (:game-phase state) (:timer-running game-phases))
+  (if (and (>= (:game-phase state) (:timer-running game-phases))
+           (< (:game-phase state) (:end-screen game-phases)))
     (let [subject-index-to-show (peek (:subjects-remaining state))
           rect-pos-current (if (not (nil? subject-index-to-show)) (nth subject-rect-positions subject-index-to-show) nil)]
        ; draw current subject (the first remaining one)
@@ -265,7 +277,8 @@
        )
   )
   ; draw timer display based on actual value during game (not on title or end screens)
-  (if (> (:game-phase state) (:title-screen game-phases))
+  (if (and (> (:game-phase state) (:title-screen game-phases))
+           (< (:game-phase state) (:end-screen game-phases)))
     (if (> (:timer state) config/game-length-sec) ; freeze clock at max during initial second
       (let [gls config/game-length-sec
             tens-digit (if (> gls 9) (keyword (subs (str gls) 0 1)) nil)
@@ -280,18 +293,30 @@
       )
     )
   )
+  ; end screen
+  (if (= (:game-phase state) (:end-screen game-phases))
+    (do
+      (q/text-font font-award-value)
+      (q/text-leading config/line-spacing-award-value)
+      (shadow-text "This has been a\nJake Wimberley\nproduction" 6 [255 255 255] [0 0 0] 0 0 800 400)
+      (q/text-font font-subject-text)
+      (q/text-leading config/line-spacing-subject-text)
+      (shadow-text "\u00a9 2017\nFree software, released under the Eclipse Public License" 4 [255 255 255] [0 0 0] 0 350 800 100)
+      (shadow-text "Press [R] to play again!" 4 [255 255 255] [0 0 0] 0 470 800 100)
+    )
+  )
   (if config/show-debug-data
     (do
       (q/text-font font-subject-text)
       (q/fill 255 255 255)
       (q/text-align :left)
-      (q/text-num (:game-phase state) 20 20)
-      (q/text-num (q/frame-count) 20 40)
-      (q/text-num (:timer state) 20 60)
-      (q/text (str "rem: " (:subjects-remaining state)) 20 80)
-      (q/text (str "cor: " (:subjects-correct state)) 20 100)
-      (q/text (str "pas: " (:subjects-passed state)) 20 120)
-      (q/text (str "k-p: " (:key-pressed state)) 20 140)
+      (q/text-num (:game-phase state) 20 30)
+      (q/text-num (q/frame-count) 20 60)
+      (q/text-num (:timer state) 20 90)
+      (q/text (str "rem: " (:subjects-remaining state)) 20 120)
+      (q/text (str "cor: " (:subjects-correct state)) 20 150)
+      (q/text (str "pas: " (:subjects-passed state)) 20 180)
+      (q/text (str "k-p: " (:key-pressed state)) 20 210)
       ))
 )
 
