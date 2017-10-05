@@ -103,7 +103,7 @@
         ; if time ran out, or no subjects are remaining, jump to end phase
         (if (or (<= (:timer state) 0) (= 0 (count (:subjects-remaining state))))
           {:game-phase (:pause-after-game game-phases)
-           :timer 0
+           :timer (max (:timer state) 0)
            :subjects-correct sc
            :subjects-passed sp
            :subjects-remaining sr
@@ -303,12 +303,20 @@
           (q/text-leading config/line-spacing-award-value)
           (shadow-text "Grand prize winner!" 6 [255 255 255] [0 0 0] 0 100 800 300)
           (q/text-font font-grand-prize-value)
-          (shadow-text (str config/value-symbol config/grand-prize-value) 6 [255 255 255] [0 0 0] 0 300 800 200)
+          (shadow-text (str config/value-symbol config/grand-prize-value) 6 [255 255 255] [0 0 0] 0 270 800 250)
           )
-        )
+        (let [blather-str (if (= 0 (:timer state)) "Sorry!\nTime's up!" "Be careful giving those clues!")
+              final-score (if (= 0 (count (:subjects-correct state)))
+                            0
+                            (apply + (for [s (:subjects-correct state)] (nth config/subject-values s))))]
+          (q/text-font font-award-value)
+          (q/text-leading config/line-spacing-award-value)
+          (shadow-text blather-str 6 [30 250 180] [0 0 0] 0 75 800 300)
+          (shadow-text (str "Total winnings " config/value-symbol final-score) 6 [30 250 180] [0 0 0] 0 350 800 200)
+          ))
       (q/text-font font-subject-text)
       (q/text-leading config/line-spacing-subject-text)
-      (shadow-text "[E] Continue" 4 [255 255 255] [0 0 0] 0 500 800 100))
+      (shadow-text "[E] Continue" 4 [30 250 180] [0 0 0] 0 500 800 100))
     )
   ; end screen
   (if (= (:game-phase state) (:end-screen game-phases))
