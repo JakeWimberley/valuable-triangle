@@ -208,13 +208,17 @@
         )
       )
     )
-  ; On the title screen draw the name of the game.
-  (if (= (:game-phase state) (:title-screen game-phases))
-    (do
-      (q/text-font font-award-value)
-      (q/text-leading config/line-spacing-award-value)
-      (shadow-text "It's time to play...\nTHE\nVALUABLE\nTRIANGLE\nPress [A] to continue" 6 [255 255 255] [0 0 0] 0 0 800 600)
-      (q/no-stroke)))
+  ; On the title screen draw the name of the game after a delay.
+  (let [delayed-frame-count (max 0 (- (q/frame-count) (* 1.2 config/spec-frame-rate)))]
+    (if (= (:game-phase state) (:title-screen game-phases))
+      (let [frame-factor (min 600 (* 600 (/ delayed-frame-count (* config/spec-frame-rate 0.6))))
+            title-corner-y (- 600.0 frame-factor)
+            title-size-y (- 600.0 title-corner-y)]
+        (q/shape (q/load-shape "elements/titlecard.svg") 0 title-corner-y 800 title-size-y)
+        (q/text-font font-subject-text)
+        (q/text-leading config/line-spacing-subject-text)
+        (shadow-text "Press [A] to continue" 4 [255 255 255] [0 0 0] 0 450 800 150)
+        )))
   ; Allow selection of list name on pause screen.
   (if (= (:game-phase state) (:pause-before-game game-phases))
     (do
