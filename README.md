@@ -14,12 +14,17 @@ game presently works, but visual embellishments are still being developed.
 
 lein run
 
-1. Press 'a' to move beyond the splash screen.
-1. When players are ready to begin press 's' and the timer will start.
+1. All input is via the keyboard. The mouse is not used.
 1. During the game, the clue-giver or judge presses these keys:
 * 'c' for a correct answer
 * 'p' if the players choose to pass, i.e., move to the next subject and return to the passed subject at the end
 * 'b' to "buzz" an illegal clue. Rules have varied from version to version of the TV game, but generally hand gestures are not permitted, and clues must be a list in which each item ends in a noun (e.g. "an exciting game" versus "a game that excites you").
+
+## Version history
+
+* 0.6.1 - animated title screen and minor code improvements
+* 0.6 - selectable subject lists, scoring, on-screen prompts
+* 0.5 - first playable version
 
 ## License
 

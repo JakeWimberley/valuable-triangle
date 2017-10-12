@@ -194,31 +194,31 @@
           prism-pos (nth subject-rect-positions subject-index)]
       (if (nil? (some #{subject-index} (:subjects-correct state)))
         (do
-          (apply q/fill config/color-prism-frame-bright) ; glowing border for non-correct subjects
+          (apply q/fill config/color-prism-frame-bright)
           (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
-          (apply q/fill config/color-prism-notsubject-bg) ; visible face of prism when subject hidden
+          (apply q/fill config/color-prism-notsubject-bg)
           (q/rect (first prism-pos) (second prism-pos) 186.298 133.634)
-          (apply q/fill config/color-prism-notsubject-fg) ; logo on prism
+          (apply q/fill config/color-prism-notsubject-fg)
           (apply q/quad (flatten (map (partial vector-add (nth logo-origins subject-index)) logo-quad-points)))
-        )
+          )
         (do
-          (apply q/fill config/color-prism-frame-dim) ; illuminated border "turned off" for correctly guessed subjects
+          (apply q/fill config/color-prism-frame-dim) ; dim border if subject is not still in play
           (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
-        )
+          )
         )
       )
     )
   ; On the title screen draw the name of the game after a delay.
-  (let [delayed-frame-count (max 0 (- (q/frame-count) (* 1.2 config/spec-frame-rate)))]
-    (if (= (:game-phase state) (:title-screen game-phases))
-      (let [frame-factor (min 600 (* 600 (/ delayed-frame-count (* config/spec-frame-rate 0.6))))
-            title-corner-y (- 600.0 frame-factor)
-            title-size-y (- 600.0 title-corner-y)]
-        (q/shape (q/load-shape "elements/titlecard.svg") 0 title-corner-y 800 title-size-y)
-        (q/text-font font-subject-text)
-        (q/text-leading config/line-spacing-subject-text)
-        (shadow-text "Press [A] to continue" 4 config/color-infotext-fg config/color-infotext-bg 0 450 800 150)
-        )))
+  (if (= (:game-phase state) (:title-screen game-phases))
+    (let [delayed-frame-count (max 0 (- (q/frame-count) (* 1.2 config/spec-frame-rate)))
+          frame-factor (min 600 (* 600 (/ delayed-frame-count (* config/spec-frame-rate 0.4))))
+          title-corner-y (- 600.0 frame-factor)
+          title-size-y (- 600.0 title-corner-y)]
+      (q/shape (q/load-shape "elements/titlecard.svg") 0 title-corner-y 800 title-size-y)
+      (q/text-font font-subject-text)
+      (q/text-leading config/line-spacing-subject-text)
+      (if (= frame-factor 600) (shadow-text "Press [A] to continue" 4 config/color-infotext-fg config/color-infotext-bg 0 450 800 150))
+      ))
   ; Allow selection of list name on pause screen.
   (if (= (:game-phase state) (:pause-before-game game-phases))
     (do
@@ -330,7 +330,7 @@
       (shadow-text "This has been a\nJake Wimberley\nproduction" 6 config/color-infotext-fg config/color-infotext-bg 0 0 800 400)
       (q/text-font font-subject-text)
       (q/text-leading config/line-spacing-subject-text)
-      (shadow-text "\u00a9 2017\nFree software, released under the Eclipse Public License" 4 config/color-infotext-fg config/color-infotext-bg 0 350 800 100)
+      (shadow-text "Version 0.6.1 \u00a9 2017\nFree software, released under the Eclipse Public License" 4 config/color-infotext-fg config/color-infotext-bg 0 350 800 100)
       (shadow-text "[R] Play again!" 4 config/color-infotext-fg config/color-infotext-bg 0 470 800 100)
     )
   )
@@ -353,7 +353,7 @@
 (defn -main
   []
   (q/defsketch valuable-triangle
-    :title "Valuable Triangle"
+    :title "The Valuable Triangle"
     :size [800 600]
                                         ; setup function called only once, during sketch initialization.
     :setup setup
