@@ -173,15 +173,15 @@
 
 (defn draw-state [state]
   ; A nice 70s brown for the background color.
-  (q/background 0x80 0x4e 0x06)
+  (apply q/background config/color-window-bg)
   (q/no-stroke)
-  ; Always draw the background of the "big board."
-  (q/fill 0xc6 0x32 0x06) ; red border
+  ; Always draw the "big board."
+  (apply q/fill config/color-chase-border) ; border with chase lights
   (q/begin-shape)
   (doseq [p [[255 0] [0 417.5] [0 600] [800 600] [800 417.5] [545 0]]]
     (apply q/vertex p))
   (q/end-shape)
-  (q/fill 0xb2 0xba 0xdd) ; blue field
+  (apply q/fill config/color-board-bg)
   (q/begin-shape)
   (doseq [p '([280 0] [0 458.75] [0 600] [800 600] [800 458.75] [520 0])]
     (apply q/vertex p))
@@ -194,15 +194,15 @@
           prism-pos (nth subject-rect-positions subject-index)]
       (if (nil? (some #{subject-index} (:subjects-correct state)))
         (do
-          (q/fill 0xd6 0x32 0x06) ; glowing red border for non-correct subjects
+          (apply q/fill config/color-prism-frame-bright) ; glowing border for non-correct subjects
           (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
-          (q/fill 0xb5 0x19 0x13) ; red prism face
+          (apply q/fill config/color-prism-notsubject-bg) ; visible face of prism when subject hidden
           (q/rect (first prism-pos) (second prism-pos) 186.298 133.634)
-          (q/fill 0xff 0xa5 0x2c) ; yellowy color for logo
+          (apply q/fill config/color-prism-notsubject-fg) ; logo on prism
           (apply q/quad (flatten (map (partial vector-add (nth logo-origins subject-index)) logo-quad-points)))
         )
         (do
-          (q/fill 0xb5 0x19 0x13) ; illuminated red border "turned off" for correctly guessed subjects
+          (apply q/fill config/color-prism-frame-dim) ; illuminated border "turned off" for correctly guessed subjects
           (q/rect (first frame-pos) (second frame-pos) 208.236 156.177)
         )
         )
@@ -217,7 +217,7 @@
         (q/shape (q/load-shape "elements/titlecard.svg") 0 title-corner-y 800 title-size-y)
         (q/text-font font-subject-text)
         (q/text-leading config/line-spacing-subject-text)
-        (shadow-text "Press [A] to continue" 4 [255 255 255] [0 0 0] 0 450 800 150)
+        (shadow-text "Press [A] to continue" 4 config/color-infotext-fg config/color-infotext-bg 0 450 800 150)
         )))
   ; Allow selection of list name on pause screen.
   (if (= (:game-phase state) (:pause-before-game game-phases))
@@ -226,10 +226,10 @@
       (q/stroke-weight 3)
       (q/text-font font-award-value)
       (q/text-leading config/line-spacing-award-value)
-      (shadow-text (str "Subject list:\n" (nth (sort (keys config/subjects)) (:subject-list-key-index state))) 6 [255 255 255] [0 0 0] 0 0 800 400)
+      (shadow-text (str "Subject list:\n" (nth (sort (keys config/subjects)) (:subject-list-key-index state))) 6 config/color-infotext-fg config/color-infotext-bg 0 0 800 400)
       (q/text-font font-subject-text)
       (q/text-leading config/line-spacing-subject-text)
-      (shadow-text "[H] Previous list    [L] Next list    [S] Begin game!" 4 [255 255 255] [0 0 0] 0 400 800 200)
+      (shadow-text "[H] Previous list    [L] Next list    [S] Begin game!" 4 config/color-infotext-fg config/color-infotext-bg 0 400 800 200)
       (q/no-stroke)))
   (doseq [subject-index (:subjects-remaining state)]
     (let [rect-pos (nth subject-rect-positions subject-index)]
@@ -240,14 +240,14 @@
           (if (or (= subject-index (peek (:subjects-remaining state)))
                   (not (nil? (some #{subject-index} (:subjects-passed state)))))
             (do
-              (q/fill 255 255 255)
+              (apply q/fill config/color-prism-subject-bg)
               (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
               )
             )
                                       ; Else if subject is in correct list then redraw a blank red face on which we can display the award value.
           (if (not (nil? (some #{subject-index} (:subjects-correct state))))
             (do
-              (q/fill 0xb5 0x19 0x13)
+              (apply q/fill config/color-prism-notsubject-bg)
               (q/rect (first rect-pos) (second rect-pos) 186.298 133.634)
               )
             )
@@ -261,7 +261,7 @@
     (let [subject-index-to-show (peek (:subjects-remaining state))
           rect-pos-current (if (not (nil? subject-index-to-show)) (nth subject-rect-positions subject-index-to-show) nil)]
        ; draw current subject (the first remaining one)
-       (q/fill 0 0 0) ; black text
+       (apply q/fill config/color-prism-subject-fg)
        (q/text-font font-subject-text)
        (q/text-leading config/line-spacing-subject-text)
        (if (not (nil? subject-index-to-show))
@@ -273,7 +273,7 @@
            (q/text passed-subject-text (first rect-pos-passed) (second rect-pos-passed) 186.298 133.634))
          )
                                         ; draw values of the subjects the player has gotten correct
-       (q/fill 0xff 0xa5 0x2c) ; yellowey text
+       (apply q/fill config/color-prism-notsubject-fg) ; yellowey text
        (q/text-font font-award-value)
        (doseq [value-to-draw (:subjects-correct state)]
          (let [rect-pos-value (nth subject-rect-positions value-to-draw)]
@@ -327,11 +327,11 @@
     (do
       (q/text-font font-award-value)
       (q/text-leading config/line-spacing-award-value)
-      (shadow-text "This has been a\nJake Wimberley\nproduction" 6 [255 255 255] [0 0 0] 0 0 800 400)
+      (shadow-text "This has been a\nJake Wimberley\nproduction" 6 config/color-infotext-fg config/color-infotext-bg 0 0 800 400)
       (q/text-font font-subject-text)
       (q/text-leading config/line-spacing-subject-text)
-      (shadow-text "\u00a9 2017\nFree software, released under the Eclipse Public License" 4 [255 255 255] [0 0 0] 0 350 800 100)
-      (shadow-text "[R] Play again!" 4 [255 255 255] [0 0 0] 0 470 800 100)
+      (shadow-text "\u00a9 2017\nFree software, released under the Eclipse Public License" 4 config/color-infotext-fg config/color-infotext-bg 0 350 800 100)
+      (shadow-text "[R] Play again!" 4 config/color-infotext-fg config/color-infotext-bg 0 470 800 100)
     )
   )
   (if config/show-debug-data
