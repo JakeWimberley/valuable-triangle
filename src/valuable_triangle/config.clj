@@ -34,4 +34,17 @@
 (def font-size-award-value 60)
 (def line-spacing-award-value (+ font-size-award-value 15))
 
+                                        ; colors
+(def color-window-bg [0x80 0x4e 0x06])
+(def color-chase-border [0xc6 0x32 0x06])
+(def color-board-bg [0xb2 0xba 0xdd])
+(def color-prism-frame-bright [0xd6 0x32 0x06])
+(def color-prism-frame-dim [0xb5 0x19 0x13])
+(def color-prism-subject-bg [255 255 255])
+(def color-prism-subject-fg [0 0 0])
+(def color-prism-notsubject-bg [0xb5 0x19 0x13])
+(def color-prism-notsubject-fg [0xff 0xa5 0x2c])
+(def color-infotext-fg [255 255 255])
+(def color-infotext-bg [0 0 0])
+
 (load "subjects")
